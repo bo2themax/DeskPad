@@ -17,7 +17,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.titlebarAppearsTransparent = true
         window.isMovableByWindowBackground = true
         window.titleVisibility = .hidden
-        window.backgroundColor = .white
+        window.backgroundColor = .windowBackgroundColor
         window.contentMinSize = CGSize(width: 400, height: 300)
         window.contentMaxSize = CGSize(width: 3840, height: 2160)
         window.styleMask.insert(.resizable)
