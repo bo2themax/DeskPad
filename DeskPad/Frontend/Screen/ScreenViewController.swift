@@ -18,6 +18,8 @@ class ScreenViewController: SubscriberViewController<ScreenViewData>, NSWindowDe
     private var previousResolution: CGSize?
     private var previousScaleFactor: CGFloat?
 
+    private var fadeableViews = Set<NSView>()
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -53,16 +55,69 @@ class ScreenViewController: SubscriberViewController<ScreenViewData>, NSWindowDe
             CGVirtualDisplayMode(width: 1280, height: 800, refreshRate: 60),
         ]
         display.apply(settings)
+        setupFadableViews()
+    }
+
+    private func setupFadableViews() {
+        let titlebarView = NSVisualEffectView()
+        titlebarView.material = .titlebar
+        view.addSubview(titlebarView)
+        titlebarView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            titlebarView.topAnchor.constraint(equalTo: view.topAnchor),
+            titlebarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            titlebarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            titlebarView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+        ])
+
+        fadeableViews.insert(titlebarView)
+    }
+
+    func windowDidUpdate(_: Notification) {
+        let standardButtons = [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton].compactMap { view.window?.standardWindowButton($0) }
+        fadeableViews.formUnion(standardButtons)
+    }
+
+    private func hideFadeableViews() {
+        fadeableViews.forEach {
+            $0.isHidden = false
+        }
+
+        NSAnimationContext.runAnimationGroup { _ in
+            fadeableViews.forEach {
+                $0.animator().alphaValue = 0
+            }
+        } completionHandler: {
+            self.fadeableViews.forEach {
+                if let btn = $0 as? NSButton {
+                    btn.alphaValue = 1e-100
+                } else {
+                    $0.isHidden = true
+                }
+            }
+        }
+    }
+
+    private func showFadeableViews() {
+        fadeableViews.forEach {
+            $0.isHidden = false
+        }
+
+        NSAnimationContext.runAnimationGroup { _ in
+            fadeableViews.forEach {
+                $0.animator().alphaValue = 1
+            }
+        }
     }
 
     override func update(with viewData: ScreenViewData) {
         if viewData.isWindowHighlighted != isWindowHighlighted {
             isWindowHighlighted = viewData.isWindowHighlighted
-            view.window?.backgroundColor = isWindowHighlighted
-                ? NSColor(named: "TitleBarActive")
-                : NSColor(named: "TitleBarInactive")
             if isWindowHighlighted {
                 view.window?.orderFrontRegardless()
+                hideFadeableViews()
+            } else {
+                showFadeableViews()
             }
         }
 

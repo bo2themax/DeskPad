@@ -21,6 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.contentMinSize = CGSize(width: 400, height: 300)
         window.contentMaxSize = CGSize(width: 3840, height: 2160)
         window.styleMask.insert(.resizable)
+        window.styleMask.insert(.fullSizeContentView)
         window.collectionBehavior.insert(.fullScreenNone)
 
         let mainMenu = NSMenu()
